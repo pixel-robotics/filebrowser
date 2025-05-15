@@ -6,7 +6,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
-
+	"log"
+	"time"
+	
 	"github.com/filebrowser/filebrowser/v2/settings"
 	"github.com/filebrowser/filebrowser/v2/users"
 )
@@ -52,9 +54,13 @@ func (a JSONAuth) Auth(r *http.Request, usr users.Store, _ *settings.Settings, s
 	}
 
 	u, err := usr.Get(srv.Root, cred.Username)
-	if err != nil || !users.CheckPwd(cred.Password, u.Password) {
-		return nil, os.ErrPermission
-	}
+if err != nil || !users.CheckPwd(cred.Password, u.Password) {
+	log.Printf("Login failed for user '%s' at %s: Invalid credentials", cred.Username, time.Now().Format(time.RFC3339))
+	return nil, os.ErrPermission
+}
+
+// Log successful login
+log.Printf("Login successful for user '%s' at %s", cred.Username, time.Now().Format(time.RFC3339))
 
 	return u, nil
 }
