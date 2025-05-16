@@ -1,5 +1,59 @@
-*
-!docker/*
-!healthcheck.sh
-!docker_config.json
-!filebrowser
+# Git specific
+.git
+.gitignore
+.gitattributes
+
+# Node.js specific (local dependencies, not needed in context if installed in Docker)
+frontend/node_modules
+
+# Go specific (local build cache, binaries if you build locally for testing)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*test
+*test.exe
+*out*
+bin/
+pkg/
+vendor/
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Local configuration or sensitive files (if any)
+# .env
+
+# Any local build artifacts if you sometimes build outside Docker
+# For example, if 'make build' creates a 'filebrowser' binary at the root
+# and you DON'T want to accidentally use that one if the Dockerfile is simple.
+# However, for a multi-stage build that always rebuilds, this is less critical.
+# filebrowser # Comment this out or remove if using multi-stage that builds it
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Docker files that are not part of the source code itself
+# (though these are usually small and often not explicitly ignored)
+# Dockerfile
+# Dockerfile.*
+# docker-compose.yml
+
+# If you have specific large files or directories not needed for the build
+# large_asset_directory/
+# big_data_file.dat
+
