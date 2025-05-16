@@ -1,0 +1,67 @@
+# ---- Stage 1: Build Frontend Assets ----
+# Use a Node.js image that meets the project's requirements (>=22.0.0)
+FROM node:22-alpine AS frontend-builder
+
+# Install pnpm
+RUN npm install -g pnpm
+
+WORKDIR /app/frontend
+
+# Copy frontend package manager files
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+
+# Install frontend dependencies
+RUN pnpm install
+
+# Copy the rest of the frontend source code
+COPY frontend/ ./
+
+# Build frontend assets
+RUN pnpm run build
+# This creates ./dist with the frontend assets
+
+# ---- Stage 2: Build Go Backend ----
+# Use a Go version compatible with your go.mod (e.g., 1.23)
+FROM golang:1.23-alpine AS go-builder
+
+WORKDIR /app
+
+# Copy Go module files
+COPY go.mod go.sum ./
+
+# Download Go dependencies
+RUN go mod download
+
+# Copy the rest of the backend source code (including your modifications)
+COPY . .
+
+# Copy built frontend assets from the frontend-builder stage
+# The Go build process (using go:embed) will look for these in ./frontend/dist
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Build the Go application (simple build, no extra flags)
+# This assumes your main package is at the root (main.go)
+RUN go build -o /filebrowser ./main.go
+# If your main.go is in ./cmd/filebrowser, change the last argument to ./cmd/filebrowser
+
+# ---- Stage 3: Final Runtime Image (Minimal) ----
+FROM alpine:latest
+
+# Alpine needs ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /app
+
+# Copy only the compiled Go binary from the go-builder stage
+COPY --from=go-builder /filebrowser filebrowser
+
+# Create a basic directory for files if needed by filebrowser
+RUN mkdir -p /srv
+VOLUME /srv
+
+# Expose the default port
+EXPOSE 3000
+
+# Command to run filebrowser
+# You might need to add --database /path/to/database.db if you use a persistent one
+ENTRYPOINT ["/app/filebrowser"]
